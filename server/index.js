@@ -3,21 +3,16 @@ const cors = require('cors');
 const { runAudit } = require('./auditor');
 
 const app = express();
-
 app.use(express.json());
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
+  origin: ['https://accessibility-audit-tool-pi.vercel.app', 'http://localhost:5173']
 }));
 
-// POST /audit endpoint
 app.post('/audit', async (req, res) => {
   const { url } = req.body;
-
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: 'A valid URL is required' });
   }
-
   try {
     const results = await runAudit(url);
     res.json(results);
@@ -27,7 +22,4 @@ app.post('/audit', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

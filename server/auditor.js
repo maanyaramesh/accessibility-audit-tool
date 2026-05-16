@@ -1,50 +1,29 @@
-const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
+const puppeteer = require('puppeteer');
+const { source: axeSource } = require('axe-core');
 
 async function runAudit(url) {
-  const executablePath = await chromium.executablePath();
-
   const browser = await puppeteer.launch({
-    args: [
-      ...chromium.args,
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--single-process",
-    ],
-    executablePath: executablePath || undefined,
-    headless: chromium.headless || "new",
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+    '--disable-gpu'],
+    headless: true,
   });
-
   const page = await browser.newPage();
 
-  // 🔥 IMPORTANT: prevent infinite hanging
-  page.setDefaultNavigationTimeout(60000);
-  page.setDefaultTimeout(60000);
-
-  // 🔥 helps avoid bot-block / slow loads
-  await page.setUserAgent(
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  );
-
-  let title = "No title";
-
   try {
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.evaluate(axeSource);        // inject axe into the live page
+    const results = await page.evaluate(async () => await axe.run());
 
-    title = await page.title();
-  } catch (err) {
-    console.error("Navigation error:", err.message);
+    return {
+      url,
+      violations: results.violations,
+      passes: results.passes.length,
+      incomplete: results.incomplete.length,
+      timestamp: new Date().toISOString(),
+    };
+  } finally {
+    await browser.close();
   }
-
-  await browser.close();
-
-  return {
-    title,
-  };
 }
 
 module.exports = { runAudit };
