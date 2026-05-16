@@ -5,7 +5,10 @@ const { runAudit } = require('./auditor');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+}));
 
 // POST /audit endpoint
 app.post('/audit', async (req, res) => {
