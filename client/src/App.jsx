@@ -2,9 +2,9 @@ import { useState, useRef } from "react";
 
 const IMPACT_CONFIG = {
   critical: { color: "#C0392B", bg: "#FDF0EE", border: "#E8C4BF", label: "Critical", dot: "#C0392B", order: 0 },
-  serious: { color: "#B7500A", bg: "#FDF4EE", border: "#EDD5B8", label: "Serious", dot: "#E07020", order: 1 },
+  serious:  { color: "#B7500A", bg: "#FDF4EE", border: "#EDD5B8", label: "Serious",  dot: "#E07020", order: 1 },
   moderate: { color: "#7A6200", bg: "#FDFAEE", border: "#E8DEAC", label: "Moderate", dot: "#C9A800", order: 2 },
-  minor: { color: "#1A5E8A", bg: "#EEF4FD", border: "#B8D4ED", label: "Minor", dot: "#3A8CC0", order: 3 },
+  minor:    { color: "#1A5E8A", bg: "#EEF4FD", border: "#B8D4ED", label: "Minor",    dot: "#3A8CC0", order: 3 },
 };
 
 function ScoreRing({ score }) {
@@ -76,7 +76,7 @@ function ViolationCard({ v, index }) {
           {v.nodes.length} {v.nodes.length === 1 ? "node" : "nodes"}
         </span>
         <svg width="16" height="16" viewBox="0 0 14 14" fill="none" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>
-          <path d="M3 5l4 4 4-4" stroke="#C0B9AD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 5l4 4 4-4" stroke="#C0B9AD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
       {open && (
@@ -101,7 +101,7 @@ function ViolationCard({ v, index }) {
           }}>
             View fix guide
             <svg width="12" height="12" viewBox="0 0 11 11" fill="none">
-              <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </a>
         </div>
@@ -111,11 +111,11 @@ function ViolationCard({ v, index }) {
 }
 
 export default function App() {
-  const [url, setUrl] = useState("");
+  const [url, setUrl]         = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [error, setError] = useState(null);
+  const [filter, setFilter]   = useState("all");
+  const [error, setError]     = useState(null);
   const inputRef = useRef();
 
   const runAudit = async () => {
@@ -123,57 +123,39 @@ export default function App() {
       setError("Enter a full URL starting with http:// or https://");
       return;
     }
-
     setError(null);
     setLoading(true);
     setResults(null);
     setFilter("all");
-
     try {
-      const API = import.meta.env.VITE_API_URL;
-
-      const res = await fetch(`${API}/audit`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url }),
-        }
-      );
-
+      const res = await fetch("https://a11y-audit-server.onrender.com/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Request failed");
-      }
-
+      if (data.error) throw new Error(data.error);
       setResults(data);
     } catch (err) {
-      setError(
-        err.message.includes("fetch")
-          ? "Cannot reach server — check backend URL"
-          : err.message
-      );
+      setError(err.message.includes("fetch") ? "Cannot reach server — is it running on port 3001?" : err.message);
     }
-
     setLoading(false);
   };
 
   const counts = results
     ? Object.keys(IMPACT_CONFIG).reduce((acc, k) => {
-      acc[k] = results.violations.filter(v => v.impact === k).length;
-      return acc;
-    }, {})
+        acc[k] = results.violations.filter(v => v.impact === k).length;
+        return acc;
+      }, {})
     : {};
 
   const score = results
-    ? Math.max(0, Math.round(100 - (counts.critical || 0) * 15 - (counts.serious || 0) * 8 - (counts.moderate || 0) * 4 - (counts.minor || 0) * 1))
+    ? Math.max(0, Math.round(100 - (counts.critical||0)*15 - (counts.serious||0)*8 - (counts.moderate||0)*4 - (counts.minor||0)*1))
     : null;
 
   const filtered = results
     ? (filter === "all" ? results.violations : results.violations.filter(v => v.impact === filter))
-      .slice().sort((a, b) => (IMPACT_CONFIG[a.impact]?.order ?? 9) - (IMPACT_CONFIG[b.impact]?.order ?? 9))
+        .slice().sort((a, b) => (IMPACT_CONFIG[a.impact]?.order ?? 9) - (IMPACT_CONFIG[b.impact]?.order ?? 9))
     : [];
 
   const totalV = results?.violations.length ?? 0;
@@ -219,8 +201,8 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
             <div style={{ width: 36, height: 36, background: "#2C2A25", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="9" r="6.5" stroke="#F5F1EA" strokeWidth="1.7" />
-                <path d="M9 5.5v3.8l2.6 1.9" stroke="#F5F1EA" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="9" cy="9" r="6.5" stroke="#F5F1EA" strokeWidth="1.7"/>
+                <path d="M9 5.5v3.8l2.6 1.9" stroke="#F5F1EA" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "#2C2A25", letterSpacing: "-0.02em", fontFamily: "'Fraunces', serif" }}>A11yScan</div>
@@ -241,10 +223,10 @@ export default function App() {
           {error && <p style={{ color: "#C0392B", fontSize: 13, marginTop: 8, lineHeight: 1.5 }}>{error}</p>}
           <button className="run-btn" onClick={runAudit} disabled={loading || !url} style={{ marginTop: 10 }}>
             {loading
-              ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}>
-                <span style={{ width: 15, height: 15, border: "2px solid #5A5750", borderTopColor: "#F5F1EA", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-                Auditing…
-              </span>
+              ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:9 }}>
+                  <span style={{ width:15, height:15, border:"2px solid #5A5750", borderTopColor:"#F5F1EA", borderRadius:"50%", display:"inline-block", animation:"spin 0.7s linear infinite" }}/>
+                  Auditing…
+                </span>
               : "Run Audit"}
           </button>
         </div>
@@ -275,7 +257,7 @@ export default function App() {
                   ))}
                 </div>
                 <div style={{ fontSize: 12, color: "#B0AA9E", padding: "14px 0 18px" }}>
-                  Audited {new Date(results.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  Audited {new Date(results.timestamp).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
                 </div>
               </div>
             </div>
@@ -292,12 +274,12 @@ export default function App() {
           {loading && (
             <div style={{ padding: "32px 20px", textAlign: "center" }}>
               <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 14 }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#C0B9AD", animation: `shimmer 1.2s ease ${i * 0.2}s infinite` }} />
+                {[0,1,2].map(i => (
+                  <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#C0B9AD", animation: `shimmer 1.2s ease ${i*0.2}s infinite` }} />
                 ))}
               </div>
               <div style={{ fontSize: 13, color: "#B0AA9E", lineHeight: 1.8 }}>
-                Launching browser<br />Injecting axe-core<br />Running checks…
+                Launching browser<br/>Injecting axe-core<br/>Running checks…
               </div>
             </div>
           )}
@@ -358,8 +340,8 @@ export default function App() {
             <div style={{ textAlign: "center", maxWidth: 440 }}>
               <div style={{ width: 72, height: 72, background: "#EAE6DF", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 22px" }}>
                 <svg width="32" height="32" viewBox="0 0 26 26" fill="none">
-                  <circle cx="13" cy="13" r="10" stroke="#A09880" strokeWidth="1.8" />
-                  <path d="M13 8.5v4.8l2.8 2.8" stroke="#A09880" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="13" cy="13" r="10" stroke="#A09880" strokeWidth="1.8"/>
+                  <path d="M13 8.5v4.8l2.8 2.8" stroke="#A09880" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
               <h2 style={{ fontSize: 26, fontWeight: 600, color: "#2C2A25", fontFamily: "'Fraunces', serif", letterSpacing: "-0.02em", marginBottom: 12 }}>
@@ -382,8 +364,8 @@ export default function App() {
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ display: "flex", gap: 7, justifyContent: "center", marginBottom: 16 }}>
-                {[0, 1, 2, 3, 4].map(i => (
-                  <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#C0B9AD", animation: `shimmer 1.4s ease ${i * 0.14}s infinite` }} />
+                {[0,1,2,3,4].map(i => (
+                  <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#C0B9AD", animation: `shimmer 1.4s ease ${i*0.14}s infinite` }} />
                 ))}
               </div>
               <div style={{ fontSize: 15, color: "#B0AA9E" }}>Running accessibility audit…</div>
