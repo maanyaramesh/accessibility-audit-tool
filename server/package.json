@@ -2,11 +2,9 @@
   "name": "a11y-audit-server",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
   "build": "npx puppeteer browsers install chrome",
   "start": "node index.js"
-  },
+},
   "dependencies": {
     "@sparticuz/chromium": "^148.0.0",
     "axe-core": "^4.9.0",
