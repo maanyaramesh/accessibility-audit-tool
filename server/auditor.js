@@ -1,10 +1,11 @@
 const puppeteer = require('puppeteer');
 const { source: axeSource } = require('axe-core');
+const path = require('path');
 
 async function runAudit(url) {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/opt/render/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
+    executablePath: path.join(__dirname, '.cache', 'puppeteer', 'chrome', 'linux-127.0.6533.88', 'chrome-linux64', 'chrome'),
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
