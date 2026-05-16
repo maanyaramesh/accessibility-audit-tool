@@ -1,12 +1,15 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer');
 const { source: axeSource } = require('axe-core');
 
 async function runAudit(url) {
   const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+    ],
   });
   const page = await browser.newPage();
 
@@ -14,7 +17,6 @@ async function runAudit(url) {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     await page.evaluate(axeSource);
     const results = await page.evaluate(async () => await axe.run());
-
     return {
       url,
       violations: results.violations,
