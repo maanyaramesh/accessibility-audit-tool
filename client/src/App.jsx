@@ -118,29 +118,47 @@ export default function App() {
   const [error, setError]     = useState(null);
   const inputRef = useRef();
 
-  const runAudit = async () => {
-    if (!url.startsWith("http")) {
-      setError("Enter a full URL starting with http:// or https://");
-      return;
-    }
-    setError(null);
-    setLoading(true);
-    setResults(null);
-    setFilter("all");
-    try {
-      const res = await fetch("http://localhost:3001/audit", {
+ const runAudit = async () => {
+  if (!url.startsWith("http")) {
+    setError("Enter a full URL starting with http:// or https://");
+    return;
+  }
+
+  setError(null);
+  setLoading(true);
+  setResults(null);
+  setFilter("all");
+
+  try {
+    const API = import.meta.env.VITE_API_URL;
+
+const res = await fetch(`${API}/audit`,
+      {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ url }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setResults(data);
-    } catch (err) {
-      setError(err.message.includes("fetch") ? "Cannot reach server — is it running on port 3001?" : err.message);
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Request failed");
     }
-    setLoading(false);
-  };
+
+    setResults(data);
+  } catch (err) {
+    setError(
+      err.message.includes("fetch")
+        ? "Cannot reach server — check backend URL"
+        : err.message
+    );
+  }
+
+  setLoading(false);
+};
 
   const counts = results
     ? Object.keys(IMPACT_CONFIG).reduce((acc, k) => {
