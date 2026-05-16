@@ -5,7 +5,7 @@ const { runAudit } = require('./auditor');
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: ['https://accessibility-audit-tool-pi.vercel.app', 'http://localhost:5173']
+  origin: '*'
 }));
 
 app.post('/audit', async (req, res) => {
