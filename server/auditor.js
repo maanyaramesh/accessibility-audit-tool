@@ -1,97 +1,113 @@
 const puppeteer = require('puppeteer');
-const { source: axeSource } = require('axe-core');
+const lighthouse = require('lighthouse');
 
 async function runAudit(url) {
+  let browser;
+
   try {
-    // Add https if missing
-    if (!url.startsWith('http')) {
-      url = `https://${url}`;
-    }
+    browser = await puppeteer.launch({
+      headless: 'new',
 
-    console.log('Starting audit for:', url);
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH,
 
-    const browser = await puppeteer.launch({
-      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--single-process',
-        '--no-zygote',
-      ],
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-first-run',
+        '--safebrowsing-disable-auto-update'
+      ]
     });
 
     const page = await browser.newPage();
 
-    // Set viewport
-    await page.setViewport({
-      width: 1280,
-      height: 720,
-    });
-
-    // Block heavy resources for faster loading
+    // Block heavy resources
     await page.setRequestInterception(true);
 
     page.on('request', (req) => {
-      const resourceType = req.resourceType();
+      const blockedResources = [
+        'image',
+        'font',
+        'media'
+      ];
 
-      if (['image', 'font', 'media'].includes(resourceType)) {
+      if (
+        blockedResources.includes(
+          req.resourceType()
+        )
+      ) {
         req.abort();
       } else {
         req.continue();
       }
     });
 
-    console.log('Opening page...');
+    // Remove timeout limits
+    page.setDefaultNavigationTimeout(0);
+    page.setDefaultTimeout(0);
 
-    // Faster + more reliable than networkidle2
+    // Open website
     await page.goto(url, {
-      waitUntil: 'domcontentloaded',
-      timeout: 20000,
+      waitUntil: 'networkidle2',
+      timeout: 0
     });
 
-    console.log('Page loaded');
+    // Run Lighthouse audit
+    const result = await lighthouse(
+      url,
+      {
+        port: new URL(
+          browser.wsEndpoint()
+        ).port,
 
-    // Wait for body
-    await page.waitForSelector('body', {
-      timeout: 10000,
-    });
+        output: 'json',
 
-    console.log('Injecting axe...');
+        logLevel: 'error',
 
-    // Inject axe-core
-    await page.evaluate(axeSource);
+        onlyCategories: [
+          'accessibility'
+        ],
 
-    console.log('Running accessibility audit...');
+        maxWaitForLoad: 0,
 
-    // Run axe only on body for better performance
-    const results = await page.evaluate(async () => {
-      return await axe.run(document.body);
-    });
+        disableStorageReset: true,
 
-    console.log('Audit complete');
+        throttlingMethod: 'provided',
+
+        screenEmulation: {
+          mobile: false,
+          width: 1280,
+          height: 720,
+          deviceScaleFactor: 1,
+          disabled: false
+        }
+      }
+    );
 
     await browser.close();
 
-    return {
-      success: true,
-      url,
-      violations: results.violations,
-      passes: results.passes.length,
-      incomplete: results.incomplete.length,
-      timestamp: new Date().toISOString(),
-    };
+    return result.lhr;
 
-  } catch (error) {
-    console.error('AUDIT ERROR:', error);
+  } catch (err) {
 
-    return {
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    };
+    console.error(err);
+
+    if (browser) {
+      await browser.close();
+    }
+
+    throw new Error(
+      err.message || 'Audit failed'
+    );
   }
 }
 
-module.exports = { runAudit };
+module.exports = runAudit;
