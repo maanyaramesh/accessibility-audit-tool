@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const lighthouse = require('lighthouse');
+const lighthouse = require('lighthouse').default;
 
 async function runAudit(url) {
   let browser;
