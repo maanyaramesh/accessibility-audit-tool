@@ -15,10 +15,16 @@ async function runAudit(url) {
   const page = await browser.newPage();
 
   try {
+    // Increase timeout
+    page.setDefaultNavigationTimeout(60000);
+
     await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
+      waitUntil: 'domcontentloaded', // faster + more reliable
+      timeout: 60000,
     });
+
+    // wait a little for JS rendering
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await page.evaluate(axeSource);
 
@@ -31,6 +37,12 @@ async function runAudit(url) {
       violations: results.violations,
       passes: results.passes.length,
       incomplete: results.incomplete.length,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      url,
+      error: error.message,
       timestamp: new Date().toISOString(),
     };
   } finally {
