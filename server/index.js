@@ -1,12 +1,13 @@
 const express = require('express');
 const cors = require('cors');
-const { runAudit } = require('./auditor');
+
+const runAudit = require('./auditor');
 
 const app = express();
+
+app.use(cors());
+
 app.use(express.json());
-app.use(cors({
-  origin: '*'
-}));
 
 app.post('/audit', async (req, res) => {
   const { url } = req.body;
